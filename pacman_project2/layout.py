@@ -144,6 +144,7 @@ def getLayout(name, back = 2):
     return layout
 
 def tryToLoad(fullname):
+    print(fullname)
     if(not os.path.exists(fullname)): return None
     f = open(fullname)
     try: return Layout([line.strip() for line in f])
