@@ -19,6 +19,7 @@ from game import Directions, Actions
 import game
 from util import nearestPoint
 
+
 #################
 # Team creation #
 #################
@@ -26,7 +27,7 @@ from util import nearestPoint
 
 def createTeam(firstIndex, secondIndex, isRed,
                first='OffensiveAgent', second='DefensiveAgent'):
-  """
+    """
   This function should return a list of two agents that will form the
   team, initialized using firstIndex and secondIndex as their agent
   index numbers.  isRed is True if the red team is being created, and
@@ -41,8 +42,9 @@ def createTeam(firstIndex, secondIndex, isRed,
   behavior is what you want for the nightly contest.
   """
 
-# The following line is an example only; feel free to change it.
-  return [eval(first)(firstIndex), eval(second)(secondIndex)]
+    # The following line is an example only; feel free to change it.
+    return [eval(first)(firstIndex), eval(second)(secondIndex)]
+
 
 ##########
 # Agents #
@@ -50,203 +52,246 @@ def createTeam(firstIndex, secondIndex, isRed,
 
 
 class BaseAgent(CaptureAgent):
-  """
+    """
   A base class for reflex agents that chooses score-maximizing actions
   """
 
-  def registerInitialState(self, gameState):
-    self.start = gameState.getAgentPosition(self.index)
-    CaptureAgent.registerInitialState(self, gameState)
+    def registerInitialState(self, gameState):
+        self.start = gameState.getAgentPosition(self.index)
+        CaptureAgent.registerInitialState(self, gameState)
 
-  def chooseAction(self, gameState):
-    """
+    def chooseAction(self, gameState):
+        """
     Picks among the actions with the highest Q(s,a).
     """
-    actions = gameState.getLegalActions(self.index)
+        actions = gameState.getLegalActions(self.index)
 
-    # You can profile your evaluation time by uncommenting these lines
-    # start = time.time()
-    values = [self.evaluate(gameState, a) for a in actions]
-    # print 'eval time for agent %d: %.4f' % (self.index, time.time() - start)
+        # You can profile your evaluation time by uncommenting these lines
+        # start = time.time()
+        values = [self.evaluate(gameState, a) for a in actions]
+        # print 'eval time for agent %d: %.4f' % (self.index, time.time() - start)
 
-    maxValue = max(values)
-    bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+        maxValue = max(values)
+        bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
-    foodLeft = len(self.getFood(gameState).asList())
+        foodLeft = len(self.getFood(gameState).asList())
 
-    if foodLeft <= 2:
-      bestDist = 9999
-      for action in actions:
-        successor = self.getSuccessor(gameState, action)
-        pos2 = successor.getAgentPosition(self.index)
-        dist = self.getMazeDistance(self.start,pos2)
-        if dist < bestDist:
-          bestAction = action
-          bestDist = dist
-      return bestAction
+        if foodLeft <= 2:
+            bestDist = 9999
+            for action in actions:
+                successor = self.getSuccessor(gameState, action)
+                pos2 = successor.getAgentPosition(self.index)
+                dist = self.getMazeDistance(self.start, pos2)
+                if dist < bestDist:
+                    bestAction = action
+                    bestDist = dist
+            return bestAction
 
-    return random.choice(bestActions)
+        return random.choice(bestActions)
 
-  def getSuccessor(self, gameState, action):
-    """
+    def getSuccessor(self, gameState, action):
+        """
     Finds the next successor which is a grid position (location tuple).
     """
-    successor = gameState.generateSuccessor(self.index, action)
-    pos = successor.getAgentState(self.index).getPosition()
-    if pos != nearestPoint(pos):
-      # Only half a grid position was covered
-      return successor.generateSuccessor(self.index, action)
-    else:
-      return successor
+        successor = gameState.generateSuccessor(self.index, action)
+        pos = successor.getAgentState(self.index).getPosition()
+        if pos != nearestPoint(pos):
+            # Only half a grid position was covered
+            return successor.generateSuccessor(self.index, action)
+        else:
+            return successor
 
-  def evaluate(self, gameState, action):
-    """
+    def evaluate(self, gameState, action):
+        """
     Computes a linear combination of features and feature weights
     """
-    features = self.getFeatures(gameState, action)
-    weights = self.getWeights(gameState, action)
-    return features * weights
+        features = self.getFeatures(gameState, action)
+        weights = self.getWeights(gameState, action)
+        return features * weights
 
-  def getFeatures(self, gameState, action):
-    """
+    def getFeatures(self, gameState, action):
+        """
     Returns a counter of features for the state
     """
-    features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
-    features['successorScore'] = self.getScore(successor)
-    return features
+        features = util.Counter()
+        successor = self.getSuccessor(gameState, action)
+        features['successorScore'] = self.getScore(successor)
+        return features
 
-  def getWeights(self, gameState, action):
-    """
+    def getWeights(self, gameState, action):
+        """
     Normally, weights do not depend on the gamestate.  They can be either
     a counter or a dictionary.
     """
-    return {'successorScore': 1.0}
+        return {'successorScore': 1.0}
+
 
 class OffensiveAgent(BaseAgent):
-  """
-  Our idea of an offensive agent implementation.
-  """
-  def getFeatures(self, gameState, action):
-    features = util.Counter()
-    successor = self.getSuccessor(gameState, action)
 
-    # Required data
-    allFood = self.getFood(gameState)
-    allCapsules = gameState.getCapsules()
-    foodList = self.getFood(successor).asList()
-    #features['successorScore'] = -len(foodList)#self.getScore(successor)
-    walls = gameState.getWalls()
-    myPos = gameState.getAgentState(self.index).getPosition()
-    vector = Actions.directionToVector(action)
-    newPos = (int(myPos[0] + vector[0]), int(myPos[1] + vector[1]))
+    def getFeatures(self, gameState, action):
+        # Start like getFeatures of OffensiveReflexAgent
+        features = util.Counter()
 
-    # Offenders (pacmans) and defenders(ghosts)
-    enemies = [gameState.getAgentState(a) for a in self.getOpponents(gameState)]
-    offenders = [a for a in enemies if a.isPacman and a.getPosition() is not None]
-    defenders = [a for a in enemies if not a.isPacman and a.getPosition() is not None]
+        # Get other variables for later use
+        food = self.getFood(gameState)
+        capsules = gameState.getCapsules()
+        foodList = food.asList()
+        walls = gameState.getWalls()
+        currentPosition = gameState.getAgentState(self.index).getPosition()
+        vector = Actions.directionToVector(action)
+        newPosition = (int(currentPosition[0] + vector[0]), int(currentPosition[1] + vector[1]))
 
-    # If pacman has stopped
-    if action == Directions.STOP:
-        features['stop'] = 1.0
+        # Get set of invaders and defenders
+        enemies = [gameState.getAgentState(a) for a in self.getOpponents(gameState)]
+        #napdaci
+        ghosts = [a for a in enemies if not a.isPacman and a.getPosition() is not None]
+        #branitelji
+        pacmans = [a for a in enemies if a.isPacman and a.getPosition() is not None]
 
-    # Capsules
-    for cPos in allCapsules:
-        if newPos == cPos and successor.getAgentState(self.index).isPacman:
-            features['eatCapsule'] = 1.0
+        # Check if pacman has stopped
+        if action == Directions.STOP:
+            features["stop"] = 1.0
+        successor = self.getSuccessor(gameState, action)
 
-    # Ghosts
-    for ghost in defenders:
-        ghostPosition = ghost.getPosition()
-        ghostNeighbors = Actions.getLegalNeighbors(ghostPosition, walls)
-        if newPos == ghostPosition and ghost.scaredTimer > 0:
-            features['eatGhost'] += 1
-            features['eatFood'] += 2
-        elif newPos == ghostPosition and ghost.scaredTimer == 0:
-            features['scaredGhost'] = 0
-            features['normalGhost'] = 1
-        elif newPos in ghostNeighbors and ghost.scaredTimer > 0:
-            features['scaredGhost'] += 1
-        elif successor.getAgentState(self.index).isPacman and ghost.scaredTimer > 0:
-            features['scaredGhosts'] = 0
-            features['normalGhosts'] += 1
+        # Get ghosts close by
 
-    # Scared or not scared
-    # for pacman in offenders:
-    #     pacmanPos = pacman.getPosition()
-    #     pacmanNeighbors = Actions.getLegalNeighbors(pacmanPos, walls)
-    #     if newPos == pacmanPos and gameState.getAgentState(self.index).scaredTimer == 0:
-    #         features['eatOffender'] = 1
-    #     elif newPos in pacmanNeighbors and gameState.getAgentState(self.index).scaredTimer == 0:
-    #         features['closeOffender'] += 1
-    #     elif newPos == pacmanPos and gameState.getAgentState(self.index).scaredTimer > 0:
-    #         features['eatOffender'] = -10
-    #     elif newPos in pacmanNeighbors and gameState.getAgentState(self.index).scaredTimer > 0:
-    #         features['eatOffender'] = -10
-    #         features['closeOffender'] += -10
+        #if u r pacman and u have scared ghosts run baby to them
+        # MI SMO PAACMAN
+        # 1 i sad gledamo da li imamo uplasene duhove i da li je > 0, > 2 komsije, to da ne bi stigli do njega a on postao normalan,
+        #
+        #2 sa normalnim duhovima
 
-    if gameState.getAgentState(self.index).scaredTimer == 0:
-      # ghost je pacman????
-      for ghost in offenders:
-        ghostpos = ghost.getPosition()
-        neighbors = Actions.getLegalNeighbors(ghostpos, walls)
-        if newPos == ghostpos:
-          features['eatOffender'] = 1
-        elif newPos in neighbors:
-          features['closeOffender'] += 1
-    # uplasen
-    else:
-      for ghost in enemies:
-        if ghost.getPosition() != None:
-          ghostpos = ghost.getPosition()
-          neighbors = Actions.getLegalNeighbors(ghostpos,
-                                                walls)
-          if newPos in neighbors:
-            features['closeOffender'] += -10
-            features['eatOffender'] = -10
-          elif newPos == ghostpos:
-            features['eatOffender'] = -10
+        for i in ghosts:
+
+            if (i.scaredTimer > 0) and (newPosition == i.getPosition()): # jede duha na tacnoj poziciji
+                features['eatGhost'] += 5
+                features['eatFood'] = 0
+                features['successorPosition'] = -9
+
+            elif (i.scaredTimer > 2) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # jede duha u blizini
+                features["scaredGhosts"] += 1
+                features["normalGhosts"] = 5    #proba
+                features['successorPosition'] = -9
+
+            if (i.scaredTimer == 0) and (newPosition == i.getPosition()):  # nemamo uplasenih duhova
+                features["scaredGhosts"] = 0
+                features["normalGhosts"] += 5   #proba
+                features['successorPosition'] = -9
+                if (len(successor.getLegalActions(self.index)) < 3):
+                    features['successorPosition'] += 50
+            elif (i.scaredTimer == 0) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # neprijatelj u blizini
+                #features["scaredGhosts"] += 1
+                features["normalGhosts"] += 5  # proba
+                if(len(successor.getLegalActions(self.index)) < 4): # kako ga neprijatelj ne bi oterao u cosak
+                    print( str(len(successor.getLegalActions(self.index))))
+                    features['successorPosition'] += 50
+
+        # ako smo pakman i ako je duh uplasen
+        # ako smo pakman i ako nije duh uplasen
+
+        notScared = gameState.getAgentState(self.index).scaredTimer == 0
+        # enemies ukoliko smo plavi to su svi crveni bilo duh bilo pakman
+        for i in enemies:
+            if i.getPosition() is not None:
+                if newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and not notScared:
+                    features["closeInvader"] += -10
+                    features["eatInvader"] = -10
+                elif newPosition == i.getPosition() and not notScared:
+                    features["eatInvader"] = -10
+
+        for i in pacmans:
+            if newPosition == i.getPosition() and notScared:
+                features["eatInvader"] = 1
+            elif newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and notScared:
+                features["closeInvader"] += 1
 
 
-    # Compute distance to the nearest food
-    # if len(foodList) > 0:
-    #   if allFood[newPos[0]][newPos[1]]:
-    #       features['eatFood'] = 1.0
-    #   myPos = successor.getAgentState(self.index).getPosition()
-    #   minDistance = min([self.getMazeDistance(myPos, food) for food in foodList])
-    #   features['distanceToFood'] = minDistance
+        # Get capsules when nearby
+        for c in capsules:
+            if newPosition == c and successor.getAgentState(self.index).isPacman:
+                features["eatCapsule"] = 1.0
 
-    if not features['normalGhosts']:
-      if allFood[newPos[0]][newPos[1]]:
-        features['eatFood'] = 1.0
-      if len(foodList) > 0:
-        tempFood = []
-        for food in foodList:
-          (food_x, food_y) = food
-          adjustedindex = self.index - self.index % 2
-          check1 = food_y > adjustedindex / 2 * walls.height / 3
-          check2 = food_y < (adjustedindex / 2 + 1) * walls.height / 3
-          if check1 and check2:
-            tempFood.append(food)
-        if len(tempFood) == 0:
-          tempFood = foodList
-        mazedist = [self.getMazeDistance(newPos, food)
-                    for food in tempFood]
-        if min(mazedist) is not None:
-          walldimensions = walls.width * walls.height
-          features['distanceToFood'] = float(min(mazedist))/ walldimensions
-    return features
+        # Kad je neophodno izbeci hranu
+        # kad moze slobodno da jede
+        # foodList je lista pozicija hrana
+        # x ->
+        # y ^|
+        if not features["normalGhosts"] or features["normalGhosts"] < 6:
+            if food[newPosition[0]][newPosition[1]]:
+                features["eatFood"] = 1.0
+            if len(foodList) > 0:
+                tempFood = []
 
-  def getWeights(self, gameState, action):
-      return {'eatOffender': 5,
-              'closeOffender': 0,
-              'distanceToFood': -1,
-              'eatCapsule': 10.0,
-              'normalGhost': -20,
-              'eatGhost': 1.0,
-              'scaredGhost': 0.1,
-              'stop': -5,
-              'eatFood': 1.0}
+                for food in foodList:
+                    if (food[1] > 0) and (food[1] < walls.height / 3):
+                        tempFood.append(food)
+
+                if len(tempFood) == 0:
+                    tempFood = foodList
+                minDist = min([self.getMazeDistance(newPosition, food) for food in tempFood])
+                if minDist is not None:
+                    features["nearbyFood"] = float(minDist) / (walls.width * walls.height)
+
+        features.divideAll(10.0)
+
+        return features
+
+    def getWeights(self, gameState, action):
+        return {'eatInvader': 5, 'closeInvader': 0,'successorPosition' : -5,  'nearbyFood': -1, 'eatCapsule': 10.0,
+                'normalGhosts': -20, 'eatGhost': 1.0, 'scaredGhosts': 0.1, 'stop': -5, 'eatFood': 1}
+
 
 class DefensiveAgent(BaseAgent):
-   pass
+
+    def getFeatures(self, gameState, action):
+        features = util.Counter()
+        successor = self.getSuccessor(gameState, action)
+        myState = successor.getAgentState(self.index)
+        myPos = myState.getPosition()
+        enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
+        invaders = [a for a in enemies if a.isPacman and a.getPosition() != None]
+        features['numInvaders'] = len(invaders)
+
+        if len(invaders) > 0:
+            dists = [self.getMazeDistance(myPos, a.getPosition()) for a in invaders]
+            features['invaderDistance'] = min(dists)
+        if action == Directions.STOP: features['stop'] = 1
+        rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
+        if action == rev: features['reverse'] = 1
+        if (successor.getAgentState(self.index).scaredTimer > 0):
+            features['numInvaders'] = 0
+            if (features['invaderDistance'] <= 2): features['invaderDistance'] = 2
+        teamNums = self.getTeam(gameState)
+        initPos = gameState.getInitialAgentPosition(teamNums[0])
+        # use the minimum noisy distance between our agent and their agent
+        features['DistancefromStart'] = myPos[0] - initPos[0]
+        if (features['DistancefromStart'] < 0): features['DistancefromStart'] *= -1
+        if (features['DistancefromStart'] >= 10): features['DistancefromStart'] = 10
+        if (features['DistancefromStart'] <= 4): features['DistancefromStart'] += 1
+        if (features['DistancefromStart'] == 1):
+            features['DistancefromStart'] == -9999
+        features['DistancefromStart'] *= 2.5
+        features['stayApart'] = self.getMazeDistance(gameState.getAgentPosition(teamNums[0]),
+                                                     gameState.getAgentPosition(teamNums[1]))
+        features['onDefense'] = 1
+        features['offenseFood'] = 0
+
+        if myState.isPacman:
+            features['onDefense'] = -1
+
+        if (len(invaders) == 0 and successor.getScore() != 0):
+            features['onDefense'] = -1
+            features['offenseFood'] = min(
+                [self.getMazeDistance(myPos, food) for food in self.getFood(successor).asList()])
+            features['foodCount'] = len(self.getFood(successor).asList())
+            features['DistancefromStart'] = 0
+            features['stayAprts'] += 2
+            features['stayApart'] *= features['stayApart']
+        if (len(invaders) != 0):
+            features['stayApart'] = 0
+            features['DistancefromStart'] = 0
+        return features
+
+    def getWeights(self, gameState, action):
+        return {'foodCount': -20, 'offenseFood': -1, 'DistancefromStart': 3, 'numInvaders': -40000, 'onDefense': 20,
+                'stayApart': 45, 'invaderDistance': -1800, 'stop': -400, 'reverse': -250}
