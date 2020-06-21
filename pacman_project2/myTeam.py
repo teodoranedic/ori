@@ -128,6 +128,89 @@ class BaseAgent(CaptureAgent):
 
 class OffensiveAgent(BaseAgent):
 
+    def registerInitialState(self, gameState):
+        CaptureAgent.registerInitialState(self, gameState)
+
+        self.epsilon = 0.0  # exploration prob
+        self.alpha = 0.2  # learning rate
+        self.discountRate = 0.8
+        self.weights = self.getWeights(gameState, None)
+
+    def getQValue(self, state, action):
+        """
+          Returns Q(state,action)
+        """
+        features = self.getFeatures(state, action)
+        return features * self.weights
+
+    def computeValueFromQValues(self, state):
+        """
+          Returns max_action Q(state,action)
+          where the max is over legal actions.
+        """
+        possibleStateQValues = util.Counter()
+        for action in state.getLegalActions(self.index):
+            possibleStateQValues[action] = self.getQValue(state, action)
+
+        if len(possibleStateQValues) > 0:
+            return possibleStateQValues[possibleStateQValues.argMax()]
+        return 0.0
+
+    def computeActionFromQValues(self, state):
+        """
+          Compute the best action to take in a state.
+        """
+        possibleStateQValues = util.Counter()
+        possibleActions = state.getLegalActions(self.index)
+        if len(possibleActions) == 0:
+            return None
+
+        for action in possibleActions:
+            possibleStateQValues[action] = self.getQValue(state, action)
+
+        best_actions = []
+        best_value = possibleStateQValues[possibleStateQValues.argMax()]
+
+        for action, value in possibleStateQValues.items():
+            if value == best_value:
+                best_actions.append(action)
+
+        return random.choice(best_actions)
+
+    def chooseAction(self, state):
+        """
+          Compute the action to take in the current state.  With
+          probability self.epsilon, we should take a random action and
+          take the best policy action otherwise.
+        """
+        # Pick Action
+        legalActions = state.getLegalActions(self.index)
+        action = None
+
+        if len(legalActions) > 0:
+            if util.flipCoin(self.epsilon):
+                action = random.choice(legalActions)
+            else:
+                action = self.getPolicy(state)
+
+        return action
+
+    def update(self, gameState, action):
+        features = self.getFeatures(gameState, action)
+        nextState = self.getSuccessor(gameState, action)
+
+        # Calculate the reward. NEEDS WORK
+        reward = nextState.getScore() - gameState.getScore()
+        for feature in features:
+            difference = (reward + self.discountRate * self.getValue(nextState)) - self.getQValue(gameState, action)
+            self.weights[feature] = self.weights[feature] + self.alpha * difference * features[feature]
+
+    def getPolicy(self, state):
+        return self.computeActionFromQValues(state)
+
+    def getValue(self, state):
+        return self.computeValueFromQValues(state)
+
     def getFeatures(self, gameState, action):
         # Start like getFeatures of OffensiveReflexAgent
         features = util.Counter()
@@ -246,10 +329,12 @@ class DefensiveAgent(BaseAgent):
     def getFeatures(self, gameState, action):
         features = util.Counter()
         successor = self.getSuccessor(gameState, action)
+
         myState = successor.getAgentState(self.index)
         myPos = myState.getPosition()
+
         enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
-        invaders = [a for a in enemies if a.isPacman and a.getPosition() != None]
+        invaders = [a for a in enemies if a.isPacman and a.getPosition() is not None]
         features['numInvaders'] = len(invaders)
 
         if len(invaders) > 0:
@@ -258,19 +343,20 @@ class DefensiveAgent(BaseAgent):
         if action == Directions.STOP: features['stop'] = 1
         rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
         if action == rev: features['reverse'] = 1
+
         if (successor.getAgentState(self.index).scaredTimer > 0):
             features['numInvaders'] = 0
             if (features['invaderDistance'] <= 2): features['invaderDistance'] = 2
         teamNums = self.getTeam(gameState)
         initPos = gameState.getInitialAgentPosition(teamNums[0])
         # use the minimum noisy distance between our agent and their agent
-        features['DistancefromStart'] = myPos[0] - initPos[0]
-        if (features['DistancefromStart'] < 0): features['DistancefromStart'] *= -1
-        if (features['DistancefromStart'] >= 10): features['DistancefromStart'] = 10
-        if (features['DistancefromStart'] <= 4): features['DistancefromStart'] += 1
-        if (features['DistancefromStart'] == 1):
-            features['DistancefromStart'] == -9999
-        features['DistancefromStart'] *= 2.5
+        features['distancefromStart'] = myPos[0] - initPos[0]
+        if (features['distancefromStart'] < 0): features['distancefromStart'] *= -1
+        if (features['distancefromStart'] >= 10): features['distancefromStart'] = 10
+        if (features['distancefromStart'] <= 4): features['distancefromStart'] += 1
+        if (features['distancefromStart'] == 1):
+            features['distancefromStart'] == -9999
+        features['distancefromStart'] *= 2.5
         features['stayApart'] = self.getMazeDistance(gameState.getAgentPosition(teamNums[0]),
                                                      gameState.getAgentPosition(teamNums[1]))
         features['onDefense'] = 1
@@ -284,14 +370,14 @@ class DefensiveAgent(BaseAgent):
             features['offenseFood'] = min(
                 [self.getMazeDistance(myPos, food) for food in self.getFood(successor).asList()])
             features['foodCount'] = len(self.getFood(successor).asList())
-            features['DistancefromStart'] = 0
+            features['distancefromStart'] = 0
             features['stayAprts'] += 2
             features['stayApart'] *= features['stayApart']
         if (len(invaders) != 0):
             features['stayApart'] = 0
-            features['DistancefromStart'] = 0
+            features['distancefromStart'] = 0
         return features
 
     def getWeights(self, gameState, action):
-        return {'foodCount': -20, 'offenseFood': -1, 'DistancefromStart': 3, 'numInvaders': -40000, 'onDefense': 20,
+        return {'foodCount': -20, 'offenseFood': -1, 'distancefromStart': 3, 'numInvaders': -40000, 'onDefense': 20,
                 'stayApart': 45, 'invaderDistance': -1800, 'stop': -400, 'reverse': -250}
