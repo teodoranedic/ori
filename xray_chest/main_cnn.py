@@ -1,4 +1,4 @@
-
+#import tensorflow
 import keras
 from keras.models import Sequential
 from keras.layers import Conv2D,MaxPooling2D,Flatten,Dropout,Dense,BatchNormalization,SpatialDropout2D
@@ -57,10 +57,10 @@ from keras.preprocessing.image import ImageDataGenerator
 
 
 import pandas as pd
-data = pd.read_csv("C:\\Users\Korisnik\Downloads\ConvNet-master\chest_xray_data_set\metadata\chest_xray_metadata.csv")
+data = pd.read_csv("C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set\metadata\chest_xray_metadata.csv")
 
 dfd = pd.DataFrame(data=data)
-dfd["Label_1_Virus_category"] = dfd["Label_1_Virus_category"].replace({None: 'Normal', '':'Normal'})
+dfd["Label_1_Virus_category"] = dfd["Label_1_Virus_category"].replace({None: 'Normal', '': 'Normal'})
 #train_df, validate_df = train_test_split(dfd, test_size=0.00, random_state=42)
 #train_df = train_df.reset_index(drop=True)
 #validate_df = validate_df.reset_index(drop=True)
@@ -72,7 +72,7 @@ test_datagen = ImageDataGenerator(
 
 train_generator = test_datagen.flow_from_dataframe(
     dfd,
-    "C:\\Users\Korisnik\Downloads\ConvNet-master\chest_xray_data_set",
+    "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set",
     x_col='X_ray_image_name',
     y_col='Label_1_Virus_category',
     rescale=1./255,
@@ -99,7 +99,7 @@ train_generator = test_datagen.flow_from_dataframe(
 #     class_mode='categorical',
 #     batch_size=32)
 
-model.fit_generator(
+model.fit(
         train_generator,
         steps_per_epoch=99,
         epochs=20)
