@@ -2,13 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$USER_HOME$/Downloads/dobri/P5-master/.idea/P5-master.iml" filepath="$USER_HOME$/Downloads/dobri/P5-master/.idea/P5-master.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../credit_card_clustering/.idea/credit_card_clustering.iml" filepath="$PROJECT_DIR$/../credit_card_clustering/.idea/credit_card_clustering.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/pacman_project2.iml" filepath="$PROJECT_DIR$/.idea/pacman_project2.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v3-reinforcement-learning/.idea/v3-reinforcement-learning.iml" filepath="$PROJECT_DIR$/../../Vežbe/v3-reinforcement-learning/.idea/v3-reinforcement-learning.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v3-reinforcement-learning-resenje/.idea/v3-reinforcement-learning-resenje.iml" filepath="$PROJECT_DIR$/../../Vežbe/v3-reinforcement-learning-resenje/.idea/v3-reinforcement-learning-resenje.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v4-ml/.idea/v4-ml.iml" filepath="$PROJECT_DIR$/../../Vežbe/v4-ml/.idea/v4-ml.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v4-ml-resenje/.idea/v4-ml-resenje.iml" filepath="$PROJECT_DIR$/../../Vežbe/v4-ml-resenje/.idea/v4-ml-resenje.iml" />
     </modules>
   </component>
 </project>

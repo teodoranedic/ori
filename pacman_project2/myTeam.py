@@ -10,7 +10,7 @@
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
+from scipy.constants import value
 
 from captureAgents import CaptureAgent
 import distanceCalculator
@@ -62,15 +62,13 @@ class BaseAgent(CaptureAgent):
 
     def chooseAction(self, gameState):
         """
-    Picks among the actions with the highest Q(s,a).
-    """
+            
+         Picks among the actions with the highest Q(s,a).
+        """
         actions = gameState.getLegalActions(self.index)
 
-        # You can profile your evaluation time by uncommenting these lines
-        # start = time.time()
         values = [self.evaluate(gameState, a) for a in actions]
-        # print 'eval time for agent %d: %.4f' % (self.index, time.time() - start)
-
+        
         maxValue = max(values)
         bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
@@ -143,73 +141,113 @@ class OffensiveAgent(BaseAgent):
         features = self.getFeatures(state, action)
         return features * self.weights
 
-    def computeValueFromQValues(self, state):
+    # def computeValueFromQValues(self, state):
+    #     """
+    #       Returns max_action Q(state,action)
+    #       where the max is over legal actions.
+    #     """
+    #     possibleStateQValues = util.Counter()
+    #     for action in state.getLegalActions(self.index):
+    #         possibleStateQValues[action] = self.getQValue(state, action)
+    #
+    #     if len(possibleStateQValues) > 0:
+    #         return possibleStateQValues[possibleStateQValues.argMax()]
+    #     return 0.0
+
+    # def computeActionFromQValues(self, state):
+    #     """
+    #       Compute the best action to take in a state.
+    #     """
+    #     possibleStateQValues = util.Counter()
+    #     possibleActions = state.getLegalActions(self.index)
+    #     if len(possibleActions) == 0:
+    #         return None
+    #
+    #     for action in possibleActions:
+    #         possibleStateQValues[action] = self.getQValue(state, action)
+    #
+    #     best_actions = []
+    #     best_value = possibleStateQValues[possibleStateQValues.argMax()]
+    #
+    #     for action, value in possibleStateQValues.items():
+    #         if value == best_value:
+    #             best_actions.append(action)
+    #
+    #     return random.choice(best_actions)
+
+    def chooseAction(self, gameState):
         """
-          Returns max_action Q(state,action)
-          where the max is over legal actions.
+          MinMax ne zato sto necemo da uvek bira min ili max, nekad je bolji i prosek. Takodje
+        performanse su slicne performansama DFS-a koji prolazi celo stablo
+        Alfa-Beta odsecanje ne, neke korake cemo odseci a mozda su bili dobri, who will know
+        
+        Expectimax je ok kada ne znamo ishod akcije koju izvrsavamo. Ovde duhovi igraju sa
+        odredjenom dozom slucajnosti. Kod Expectimax algoritma vrednosti u stanjima treba da 
+        reprezentuju ishod koji se desava u proseku, a ne u najgorem slucaju (kao kod Minimaxa). Expectimax
+        pretraa racuna prosecnu vrednost ako podazumevamo optimalno igranje. Max cvorovi su isti kao kod Minimax pretrage. Cvorovi slucajeva su kao MIN, 
+        cvorovi, kod njih ishod nije siguran. Izracunavamo njihove ocekivane vrednosti (expected utillities), tj. u opstem
+        slucaju racunamo prosek vrednosti njihovih potomaka. Expectimax
+        uzima ocekivanu vrednost u odnosu na to kako se duhovi ponasaju. 
+           
+        Expectimax algoritam koriscen
+          
         """
-        possibleStateQValues = util.Counter()
-        for action in state.getLegalActions(self.index):
-            possibleStateQValues[action] = self.getQValue(state, action)
+        actions = gameState.getLegalActions(self.index)
+        values = [self.evaluate(gameState, a) for a in actions]
+        pacman = gameState.getAgentState(self.index)
+        bestActions = []
+        # radimo pred korak samo ukoliko je pacman
+        if pacman.isPacman:
+            maxValue = self.max_value(gameState)
+            bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+        else:
+            maxValue = max(values)
+            bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
-        if len(possibleStateQValues) > 0:
-            return possibleStateQValues[possibleStateQValues.argMax()]
-        return 0.0
+        # nemamo kad dodje do granice da se prebaci na svom terenu zbog poena i onda da se vrati
+        # da gleda da li mu preprecava put duh, ako mu prepreci onda da se vraca unazad
+        # i ako ima manje od 3 tackice hrane i ako su one blizu da ide ka njima, a ne na svojoj teritoriji
 
-    def computeActionFromQValues(self, state):
-        """
-          Compute the best action to take in a state.
-        """
-        possibleStateQValues = util.Counter()
-        possibleActions = state.getLegalActions(self.index)
-        if len(possibleActions) == 0:
-            return None
+        # da ne treba da bezi od duhova ako je scared time
 
-        for action in possibleActions:
-            possibleStateQValues[action] = self.getQValue(state, action)
+        foodLeft = len(self.getFood(gameState).asList())
 
-        best_actions = []
-        best_value = possibleStateQValues[possibleStateQValues.argMax()]
+        if foodLeft <= 2:
+            bestDist = 9999
+            for action in actions:
+                successor = self.getSuccessor(gameState, action)
+                pos2 = successor.getAgentPosition(self.index)
+                dist = self.getMazeDistance(self.start, pos2)
+                if dist < bestDist:
+                    bestAction = action
+                    bestDist = dist
+            return bestAction
 
-        for action, value in possibleStateQValues.items():
-            if value == best_value:
-                best_actions.append(action)
+        return random.choice(bestActions)
 
-        return random.choice(best_actions)
+    def max_value(self, gameState):
+        maximum = float("-inf")
+        # ovo kad bi moglo kroz sve moguce akcije
+        # ovo su akcije za trenutno stanje
+        actions = gameState.getLegalActions(self.index)
+        for action in actions:
+           maximum = max(maximum,self.evaluate(gameState, action))
+        return maximum
 
-    def chooseAction(self, state):
-        """
-          Compute the action to take in the current state.  With
-          probability self.epsilon, we should take a random action and
-          take the best policy action otherwise.
-        """
-        # Pick Action
-        legalActions = state.getLegalActions(self.index)
-        action = None
 
-        if len(legalActions) > 0:
-            if util.flipCoin(self.epsilon):
-                action = random.choice(legalActions)
-            else:
-                action = self.getPolicy(state)
-
-        return action
-
-    def update(self, gameState, action):
-        features = self.getFeatures(gameState, action)
-        nextState = self.getSuccessor(gameState, action)
-
-        # Calculate the reward. NEEDS WORK
-        reward = nextState.getScore() - gameState.getScore()
-        for feature in features:
-            difference = (reward + self.discountRate * self.getValue(nextState)) - self.getQValue(gameState, action)
-            self.weights[feature] = self.weights[feature] + self.alpha * difference * features[feature]
-
-    def getPolicy(self, state):
-        return self.computeActionFromQValues(state)
-
-    def getValue(self, state):
-        return self.computeValueFromQValues(state)
+    # def update(self, gameState, action):
+    #     features = self.getFeatures(gameState, action)
+    #     nextState = self.getSuccessor(gameState, action)
+    #
+    #     # Calculate the reward. NEEDS WORK
+    #     reward = nextState.getScore() - gameState.getScore()
+    #     for feature in features:
+    #         difference = (reward + self.discountRate * self.getValue(nextState)) - self.getQValue(gameState, action)
+    #         self.weights[feature] = self.weights[feature] + self.alpha * difference * features[feature]
+    #
+    #
+    # def getValue(self, state):
+    #     return self.computeValueFromQValues(state)
 
     def getFeatures(self, gameState, action):
         # Start like getFeatures of OffensiveReflexAgent
@@ -271,7 +309,6 @@ class OffensiveAgent(BaseAgent):
 
         # ako smo pakman i ako je duh uplasen
         # ako smo pakman i ako nije duh uplasen
-
         notScared = gameState.getAgentState(self.index).scaredTimer == 0
         # enemies ukoliko smo plavi to su svi crveni bilo duh bilo pakman
         for i in enemies:
@@ -325,6 +362,63 @@ class OffensiveAgent(BaseAgent):
 
 
 class DefensiveAgent(BaseAgent):
+
+    def chooseAction(self, gameState):
+        """
+          MinMax ne zato sto necemo da uvek bira min ili max, nekad je bolji i prosek. Takodje
+        performanse su slicne performansama DFS-a koji prolazi celo stablo
+        Alfa-Beta odsecanje ne, neke korake cemo odseci a mozda su bili dobri, who will know
+
+        Expectimax je ok kada ne znamo ishod akcije koju izvrsavamo. Ovde duhovi igraju sa
+        odredjenom dozom slucajnosti. Kod Expectimax algoritma vrednosti u stanjima treba da
+        reprezentuju ishod koji se desava u proseku, a ne u najgorem slucaju (kao kod Minimaxa). Expectimax
+        pretraa racuna prosecnu vrednost ako podazumevamo optimalno igranje. Max cvorovi su isti kao kod Minimax pretrage. Cvorovi slucajeva su kao MIN,
+        cvorovi, kod njih ishod nije siguran. Izracunavamo njihove ocekivane vrednosti (expected utillities), tj. u opstem
+        slucaju racunamo prosek vrednosti njihovih potomaka. Expectimax
+        uzima ocekivanu vrednost u odnosu na to kako se duhovi ponasaju.
+
+        Expectimax algoritam koriscen
+
+        """
+
+        actions = gameState.getLegalActions(self.index)
+        values = [self.evaluate(gameState, a) for a in actions]
+        pacman = gameState.getAgentState(self.index)
+        bestActions = []
+        # radimo pred korak samo ukoliko je pacman
+        if pacman.isPacman:
+            maxValue = max(values)
+            bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+        else:
+            approxValue, minimum = self.approx_find(gameState)
+            bestActions = [a for a, v in zip(actions, values) if (approxValue <= v) and (v >= minimum)]
+
+        # juri hranu juri hranu na vecoj udaljenosti, 15 koraka npr
+
+        # foodLeft = len(self.getFood(gameState).asList())
+        #
+        # if foodLeft <= 2:
+        #     bestDist = 9999
+        #     for action in actions:
+        #         successor = self.getSuccessor(gameState, action)
+        #         pos2 = successor.getAgentPosition(self.index)
+        #         dist = self.getMazeDistance(self.start, pos2)
+        #         if dist < bestDist:
+        #             bestAction = action
+        #             bestDist = dist
+        #     return bestAction
+
+        return random.choice(bestActions)
+
+    def approx_find(self, gameState):
+        aprox = 0
+        minimum = float("inf")
+        actions = gameState.getLegalActions(self.index)
+        for action in actions:
+            aprox += self.evaluate(gameState, action)
+            minimum = min(minimum, self.evaluate(gameState, action))
+        return aprox / len(actions), minimum
+
 
     def getFeatures(self, gameState, action):
         features = util.Counter()
