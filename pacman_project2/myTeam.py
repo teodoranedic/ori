@@ -68,7 +68,7 @@ class BaseAgent(CaptureAgent):
         actions = gameState.getLegalActions(self.index)
 
         values = [self.evaluate(gameState, a) for a in actions]
-        
+
         maxValue = max(values)
         bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
@@ -127,6 +127,7 @@ class BaseAgent(CaptureAgent):
 class OffensiveAgent(BaseAgent):
 
     def registerInitialState(self, gameState):
+        self.start = gameState.getAgentPosition(self.index)
         CaptureAgent.registerInitialState(self, gameState)
 
         self.epsilon = 0.0  # exploration prob
@@ -140,40 +141,6 @@ class OffensiveAgent(BaseAgent):
         """
         features = self.getFeatures(state, action)
         return features * self.weights
-
-    # def computeValueFromQValues(self, state):
-    #     """
-    #       Returns max_action Q(state,action)
-    #       where the max is over legal actions.
-    #     """
-    #     possibleStateQValues = util.Counter()
-    #     for action in state.getLegalActions(self.index):
-    #         possibleStateQValues[action] = self.getQValue(state, action)
-    #
-    #     if len(possibleStateQValues) > 0:
-    #         return possibleStateQValues[possibleStateQValues.argMax()]
-    #     return 0.0
-
-    # def computeActionFromQValues(self, state):
-    #     """
-    #       Compute the best action to take in a state.
-    #     """
-    #     possibleStateQValues = util.Counter()
-    #     possibleActions = state.getLegalActions(self.index)
-    #     if len(possibleActions) == 0:
-    #         return None
-    #
-    #     for action in possibleActions:
-    #         possibleStateQValues[action] = self.getQValue(state, action)
-    #
-    #     best_actions = []
-    #     best_value = possibleStateQValues[possibleStateQValues.argMax()]
-    #
-    #     for action, value in possibleStateQValues.items():
-    #         if value == best_value:
-    #             best_actions.append(action)
-    #
-    #     return random.choice(best_actions)
 
     def chooseAction(self, gameState):
         """
@@ -234,111 +201,181 @@ class OffensiveAgent(BaseAgent):
            maximum = max(maximum,self.evaluate(gameState, action))
         return maximum
 
-
-    # def update(self, gameState, action):
-    #     features = self.getFeatures(gameState, action)
-    #     nextState = self.getSuccessor(gameState, action)
-    #
-    #     # Calculate the reward. NEEDS WORK
-    #     reward = nextState.getScore() - gameState.getScore()
-    #     for feature in features:
-    #         difference = (reward + self.discountRate * self.getValue(nextState)) - self.getQValue(gameState, action)
-    #         self.weights[feature] = self.weights[feature] + self.alpha * difference * features[feature]
-    #
-    #
-    # def getValue(self, state):
-    #     return self.computeValueFromQValues(state)
-
     def getFeatures(self, gameState, action):
-        # Start like getFeatures of OffensiveReflexAgent
-        features = util.Counter()
+        # potrebni podaci
 
-        # Get other variables for later use
-        food = self.getFood(gameState)
+        features = util.Counter()
+        foodList = self.getFood(gameState).asList()
         capsules = gameState.getCapsules()
-        foodList = food.asList()
         walls = gameState.getWalls()
+
         currentPosition = gameState.getAgentState(self.index).getPosition()
         vector = Actions.directionToVector(action)
         newPosition = (int(currentPosition[0] + vector[0]), int(currentPosition[1] + vector[1]))
 
-        # Get set of invaders and defenders
         enemies = [gameState.getAgentState(a) for a in self.getOpponents(gameState)]
-        #napdaci
         ghosts = [a for a in enemies if not a.isPacman and a.getPosition() is not None]
-        #branitelji
         pacmans = [a for a in enemies if a.isPacman and a.getPosition() is not None]
 
-        # Check if pacman has stopped
+
         if action == Directions.STOP:
-            features["stop"] = 1.0
+            features["stop"] = 1
+
         successor = self.getSuccessor(gameState, action)
+        # ako smo pacman, kako se ophoditi prema duhu
+        self.as_pacman(features, ghosts, newPosition, walls, successor)
 
-        # Get ghosts close by
-
-        #if u r pacman and u have scared ghosts run baby to them
-        # MI SMO PAACMAN
-        # 1 i sad gledamo da li imamo uplasene duhove i da li je > 0, > 2 komsije, to da ne bi stigli do njega a on postao normalan,
-        #
-        #2 sa normalnim duhovima
-
-        for i in ghosts:
-
-            if (i.scaredTimer > 0) and (newPosition == i.getPosition()): # jede duha na tacnoj poziciji
-                features['eatGhost'] += 5
-                features['eatFood'] = 0
-                features['successorPosition'] = -9
-
-            elif (i.scaredTimer > 2) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # jede duha u blizini
-                features["scaredGhosts"] += 1
-                features["normalGhosts"] = 5    #proba
-                features['successorPosition'] = -9
-
-            if (i.scaredTimer == 0) and (newPosition == i.getPosition()):  # nemamo uplasenih duhova
-                features["scaredGhosts"] = 0
-                features["normalGhosts"] += 5   #proba
-                features['successorPosition'] = -9
-                if (len(successor.getLegalActions(self.index)) < 3):
-                    features['successorPosition'] += 50
-            elif (i.scaredTimer == 0) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # neprijatelj u blizini
-                #features["scaredGhosts"] += 1
-                features["normalGhosts"] += 5  # proba
-                if(len(successor.getLegalActions(self.index)) < 4): # kako ga neprijatelj ne bi oterao u cosak
-                    print( str(len(successor.getLegalActions(self.index))))
-                    features['successorPosition'] += 50
-
-        # ako smo pakman i ako je duh uplasen
-        # ako smo pakman i ako nije duh uplasen
         notScared = gameState.getAgentState(self.index).scaredTimer == 0
-        # enemies ukoliko smo plavi to su svi crveni bilo duh bilo pakman
+
+        # kroz sve, prodji ovo opet
         for i in enemies:
             if i.getPosition() is not None:
                 if newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and not notScared:
-                    features["closeInvader"] += -10
+                    features["distanceToInvader"] += -10
                     features["eatInvader"] = -10
+                    features["stop"] = 0
                 elif newPosition == i.getPosition() and not notScared:
                     features["eatInvader"] = -10
+                    features["stop"] = 0
 
-        for i in pacmans:
-            if newPosition == i.getPosition() and notScared:
-                features["eatInvader"] = 1
-            elif newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and notScared:
-                features["closeInvader"] += 1
+        # ukoliko smo duh i idemo ka pacmanima
+        self.as_ghost(features, pacmans, newPosition, notScared, walls)
 
-
-        # Get capsules when nearby
         for c in capsules:
             if newPosition == c and successor.getAgentState(self.index).isPacman:
-                features["eatCapsule"] = 1.0
+                features["eatCapsule"] = 2
 
-        # Kad je neophodno izbeci hranu
-        # kad moze slobodno da jede
-        # foodList je lista pozicija hrana
-        # x ->
-        # y ^|
-        if not features["normalGhosts"] or features["normalGhosts"] < 6:
-            if food[newPosition[0]][newPosition[1]]:
-                features["eatFood"] = 1.0
+            elif newPosition in Actions.getLegalNeighbors(c, walls) and successor.getAgentState(self.index).isPacman:
+                features["eatCapsule"] = 1
+
+
+        # ako je pacman za hranu
+        # proveri ovo 8 sa onim koliko ga mnozis i sabiras
+        self.eat_food(features, gameState, newPosition, foodList, walls)
+
+        features.divideAll(10.0)
+
+        return features
+
+    def getWeights(self, gameState, action):
+        return {
+                 'stop': -5.0,
+                 # ukoliko smo pacman
+                 'normalGhostDistance': -20.0, # alarmantno
+                 'scaredGhostDistance': -6.0,
+                 'distanceToFood': -4.0,
+                 'eatGhost': -1.0,
+                 'eatFood': 1.0,
+                 'eatCapsule': 10.0,
+                 # ukoliko smo duh
+                 'eatInvader': 9.0,
+                 'distanceToInvader': 0,
+                 'scared': -20.0,
+                 # oba
+                 'successorPosition': -5.0,
+                 'reverse': 1.0
+                }
+
+    def as_pacman(self, features, ghosts, newPosition, walls, successor):
+        for i in ghosts:
+            # ukoliko su uplaseni duhovi  i ukoliko su na tacnoj poziciji
+            # jedi ih
+            if (i.scaredTimer > 0) and (newPosition == i.getPosition()):
+                features['eatGhost'] += 5
+                features['eatFood'] = 0
+                features["distanceToFood"] = 1
+                features["normalGhostDistance"] = 0
+                features["scaredGhostDistance"] = 0
+                features['successorPosition'] = - 9
+                features["stop"] = 0
+            # ukoliko je preplaseni duh u blizini, a vreme uplasenosti ne istice uskoro
+            elif (i.scaredTimer > 2) and \
+                    (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):
+
+                features["distanceToFood"] += 1
+                features["scaredGhostDistance"] += 5
+                features["normalGhostDistance"] = 0
+                features['eatGhost'] = 0
+                features['eatFood'] += 1  # usput ako mozes hranu da jedes dok juris za duhom
+                features['successorPosition'] = - 9
+                features["stop"] = 0
+
+            # ukoliko je scared time manje od 2 i ako imamo preplasene blizu da bezi
+            elif (i.scaredTimer < 3) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):
+                # beziiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+                features["distanceToFood"] = 0
+                features["normalGhostDistance"] += 5
+                features["scaredGhostDistance"] = 0
+                features["eatCapsule"] = 1
+                features['eatGhost'] = 0
+                features['eatFood'] = 0
+                features["reverse"] += 2
+                features['successorPosition'] += 50
+
+            # ukoliko smo pacman i duhovi su normalni sta raditiiiiiiii
+            if (i.scaredTimer == 0) and (newPosition == i.getPosition()):
+                features["distanceToFood"] = 0
+                features["normalGhostDistance"] += 10
+                features["scaredGhostDistance"] = 0
+                features["reverse"] = 0.0
+                features["eatCapsule"] = 1
+                features['eatGhost'] = 0
+                features['eatFood'] = 0
+
+                if len(successor.getLegalActions(self.index)) < 3:
+                    features['successorPosition'] += 50
+
+            elif (i.scaredTimer == 0) and (
+                    newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # neprijatelj u blizini
+                features["distanceToFood"] = 0
+                features["normalGhostDistance"] += 5
+                features["reverse"] = 0
+                features["scaredGhostDistance"] = 0
+                features["eatCapsule"] = 1
+                features['eatGhost'] = 0
+                features['eatFood'] = 0
+
+                if len(successor.getLegalActions(self.index)) < 4:  # kako ga neprijatelj ne bi oterao u cosak
+                    features['successorPosition'] += 50
+
+    def as_ghost(self, features, pacmans, newPosition, notScared, walls):
+        for i in pacmans:
+
+            # ako nismo uplaseni i next pos je pacman
+            if newPosition == i.getPosition() and notScared:
+                print("UDE22")
+                features["eatInvader"] += 5
+                features["distanceToInvader"] = 1
+                features["scared"] = 0
+                features["stop"] = 0
+                features["reverse"] = 0
+
+            # ako nismo uplaseni i pacman je blizu
+            elif newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and notScared:
+                features["eatInvader"] = 1
+                features["distanceToInvader"] += 10
+                features["scared"] = 0
+                features["reverse"] = 0
+            # ako smo uplaseni
+            elif (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) or newPosition == i.getPosition()
+            ) and (not notScared):
+                print("UsasssssssDE22")
+                features["eatInvader"] = 0
+                features["distanceToInvader"] = 0
+                features["scared"] += 5
+                features["reverse"] += 10
+
+    def eat_food(self, features, gameState, newPosition, foodList, walls):
+        if not features["normalGhostDistance"] or features["normalGhostDistance"] < 6:
+            if self.getFood(gameState)[newPosition[0]][newPosition[1]]:
+                features["eatFood"] += 15
+                features["distanceToFood"] = 0
+                features["normalGhostDistance"] = 0
+                features["reverse"] = 0
+                features["scaredGhostDistance"] = 0
+                features["eatCapsule"] = 0
+                features['eatGhost'] = 0
+
             if len(foodList) > 0:
                 tempFood = []
 
@@ -350,15 +387,7 @@ class OffensiveAgent(BaseAgent):
                     tempFood = foodList
                 minDist = min([self.getMazeDistance(newPosition, food) for food in tempFood])
                 if minDist is not None:
-                    features["nearbyFood"] = float(minDist) / (walls.width * walls.height)
-
-        features.divideAll(10.0)
-
-        return features
-
-    def getWeights(self, gameState, action):
-        return {'eatInvader': 5, 'closeInvader': 0,'successorPosition' : -5,  'nearbyFood': -1, 'eatCapsule': 10.0,
-                'normalGhosts': -20, 'eatGhost': 1.0, 'scaredGhosts': 0.1, 'stop': -5, 'eatFood': 1}
+                    features["distanceToFood"] = float(minDist) / (walls.width * walls.height)
 
 
 class DefensiveAgent(BaseAgent):
@@ -384,7 +413,7 @@ class DefensiveAgent(BaseAgent):
         actions = gameState.getLegalActions(self.index)
         values = [self.evaluate(gameState, a) for a in actions]
         pacman = gameState.getAgentState(self.index)
-        bestActions = []
+
         # radimo pred korak samo ukoliko je pacman
         if pacman.isPacman:
             maxValue = max(values)
@@ -421,6 +450,7 @@ class DefensiveAgent(BaseAgent):
 
 
     def getFeatures(self, gameState, action):
+
         features = util.Counter()
         successor = self.getSuccessor(gameState, action)
 
@@ -434,12 +464,16 @@ class DefensiveAgent(BaseAgent):
         if len(invaders) > 0:
             dists = [self.getMazeDistance(myPos, a.getPosition()) for a in invaders]
             features['invaderDistance'] = min(dists)
-        if action == Directions.STOP: features['stop'] = 1
+
+        if action == Directions.STOP:
+
+            features['stop'] = 1
         rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
         if action == rev: features['reverse'] = 1
 
         if (successor.getAgentState(self.index).scaredTimer > 0):
             features['numInvaders'] = 0
+
             if (features['invaderDistance'] <= 2): features['invaderDistance'] = 2
         teamNums = self.getTeam(gameState)
         initPos = gameState.getInitialAgentPosition(teamNums[0])
@@ -457,9 +491,11 @@ class DefensiveAgent(BaseAgent):
         features['offenseFood'] = 0
 
         if myState.isPacman:
+            print(" DSDSAS333333333DA")
             features['onDefense'] = -1
 
         if (len(invaders) == 0 and successor.getScore() != 0):
+            print(" DSDSASDA")
             features['onDefense'] = -1
             features['offenseFood'] = min(
                 [self.getMazeDistance(myPos, food) for food in self.getFood(successor).asList()])
@@ -468,6 +504,7 @@ class DefensiveAgent(BaseAgent):
             features['stayAprts'] += 2
             features['stayApart'] *= features['stayApart']
         if (len(invaders) != 0):
+            print(" DSDSASddddddddddDA")
             features['stayApart'] = 0
             features['distancefromStart'] = 0
         return features
@@ -475,3 +512,4 @@ class DefensiveAgent(BaseAgent):
     def getWeights(self, gameState, action):
         return {'foodCount': -20, 'offenseFood': -1, 'distancefromStart': 3, 'numInvaders': -40000, 'onDefense': 20,
                 'stayApart': 45, 'invaderDistance': -1800, 'stop': -400, 'reverse': -250}
+        #return {'numInvaders': -1000, 'onDefense': 100, 'invaderDistance': -10, 'stop': -100, 'reverse': -2}

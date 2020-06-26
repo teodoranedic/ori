@@ -13,6 +13,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="cStringIO" />
+          <option value="util.Counter.__setitem__" />
         </list>
       </option>
     </inspection_tool>
