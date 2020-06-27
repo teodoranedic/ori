@@ -4,6 +4,12 @@ from keras.models import Sequential
 from keras.layers import Conv2D,MaxPooling2D,Flatten,Dropout,Dense,BatchNormalization,SpatialDropout2D
 from sklearn.model_selection import train_test_split
 
+'''
+results
+
+67% on training set
+'''
+
 model=Sequential()
 
 model.add(Conv2D(32,(3,3),padding='same',activation='relu',input_shape=(128,128,3)))
@@ -87,7 +93,7 @@ train_generator = test_datagen.flow_from_dataframe(
 
 # val_set = test_datagen.flow_from_dataframe(
 #     validate_df,
-#     "C:\\Users\Korisnik\Downloads\ConvNet-master\chest_xray_data_set",
+#     "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set",
 #     x_col='X_ray_image_name',
 #     y_col='Label_1_Virus_category',
 #     rescale=1. / 255,

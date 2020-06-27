@@ -15,6 +15,8 @@ result 25 epochs, 500 steps per epoch, batch size 8
 
 500/500 [==============================] - 582s 1s/step - 
 loss: 0.5160 - accuracy: 0.7515 - val_loss: 0.3889 - val_accuracy: 0.8160
+
+75% ACCURACY ON TRAINING set
 '''
 
 # load the VGG16 network, ensuring the head FC layer sets are left
