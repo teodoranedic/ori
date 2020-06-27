@@ -343,7 +343,7 @@ class OffensiveAgent(BaseAgent):
 
             # ako nismo uplaseni i next pos je pacman
             if newPosition == i.getPosition() and notScared:
-                print("UDE22")
+
                 features["eatInvader"] += 5
                 features["distanceToInvader"] = 1
                 features["scared"] = 0
@@ -359,7 +359,7 @@ class OffensiveAgent(BaseAgent):
             # ako smo uplaseni
             elif (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) or newPosition == i.getPosition()
             ) and (not notScared):
-                print("UsasssssssDE22")
+
                 features["eatInvader"] = 0
                 features["distanceToInvader"] = 0
                 features["scared"] += 5
@@ -450,7 +450,7 @@ class DefensiveAgent(BaseAgent):
 
 
     def getFeatures(self, gameState, action):
-
+        # potreni podaci
         features = util.Counter()
         successor = self.getSuccessor(gameState, action)
 
@@ -459,6 +459,7 @@ class DefensiveAgent(BaseAgent):
 
         enemies = [successor.getAgentState(i) for i in self.getOpponents(successor)]
         invaders = [a for a in enemies if a.isPacman and a.getPosition() is not None]
+
         features['numInvaders'] = len(invaders)
 
         if len(invaders) > 0:
@@ -466,50 +467,34 @@ class DefensiveAgent(BaseAgent):
             features['invaderDistance'] = min(dists)
 
         if action == Directions.STOP:
-
             features['stop'] = 1
         rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
         if action == rev: features['reverse'] = 1
 
-        if (successor.getAgentState(self.index).scaredTimer > 0):
-            features['numInvaders'] = 0
+        if len(invaders) == 0:
+            # ovde je prazno nek ide ka sredinii
+            features['distanceFromEdge'] = 3
+         # ukoliko smo preplaseni i juri nas pacman
 
-            if (features['invaderDistance'] <= 2): features['invaderDistance'] = 2
-        teamNums = self.getTeam(gameState)
-        initPos = gameState.getInitialAgentPosition(teamNums[0])
-        # use the minimum noisy distance between our agent and their agent
-        features['distancefromStart'] = myPos[0] - initPos[0]
-        if (features['distancefromStart'] < 0): features['distancefromStart'] *= -1
-        if (features['distancefromStart'] >= 10): features['distancefromStart'] = 10
-        if (features['distancefromStart'] <= 4): features['distancefromStart'] += 1
-        if (features['distancefromStart'] == 1):
-            features['distancefromStart'] == -9999
-        features['distancefromStart'] *= 2.5
-        features['stayApart'] = self.getMazeDistance(gameState.getAgentPosition(teamNums[0]),
-                                                     gameState.getAgentPosition(teamNums[1]))
-        features['onDefense'] = 1
-        features['offenseFood'] = 0
+        if myState.scaredTimer > 0:
+            features['numInvaders'] = 0
+            features['ghostsAreScared'] = 100
+            features['invaderDistance'] = -2
 
         if myState.isPacman:
-            print(" DSDSAS333333333DA")
             features['onDefense'] = -1
+        else:
+            features['onDefense'] = 1
 
-        if (len(invaders) == 0 and successor.getScore() != 0):
-            print(" DSDSASDA")
-            features['onDefense'] = -1
-            features['offenseFood'] = min(
-                [self.getMazeDistance(myPos, food) for food in self.getFood(successor).asList()])
-            features['foodCount'] = len(self.getFood(successor).asList())
-            features['distancefromStart'] = 0
-            features['stayAprts'] += 2
-            features['stayApart'] *= features['stayApart']
-        if (len(invaders) != 0):
-            print(" DSDSASddddddddddDA")
-            features['stayApart'] = 0
-            features['distancefromStart'] = 0
         return features
 
     def getWeights(self, gameState, action):
-        return {'foodCount': -20, 'offenseFood': -1, 'distancefromStart': 3, 'numInvaders': -40000, 'onDefense': 20,
-                'stayApart': 45, 'invaderDistance': -1800, 'stop': -400, 'reverse': -250}
-        #return {'numInvaders': -1000, 'onDefense': 100, 'invaderDistance': -10, 'stop': -100, 'reverse': -2}
+        return {'numInvaders': -40000,
+                'onDefense': 20,
+                'invaderDistance': -1800,
+                'stop': -400,
+                'reverse': -250, # -2
+                'foodCount': -20,
+                'offenseFood': -1,
+                'ghostsAreScared': -1,
+                'distanceFromEdge': -1}

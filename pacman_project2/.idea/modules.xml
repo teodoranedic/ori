@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/pacman_project2.iml" filepath="$PROJECT_DIR$/.idea/pacman_project2.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v3-reinforcement-learning-resenje/.idea/v3-reinforcement-learning-resenje.iml" filepath="$PROJECT_DIR$/../../Vežbe/v3-reinforcement-learning-resenje/.idea/v3-reinforcement-learning-resenje.iml" />
     </modules>
   </component>
 </project>
