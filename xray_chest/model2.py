@@ -103,7 +103,7 @@ val_set = test_datagen.flow_from_dataframe(
     class_mode='categorical',
     batch_size=32)
 
-history = model.fit(train_generator, batch_size=64, epochs=100, validation_data=val_set)# validation_split=0.2, shuffle=True)
+history = model.fit(train_generator, batch_size=64, epochs=100, validation_data=val_set)
 
 
 

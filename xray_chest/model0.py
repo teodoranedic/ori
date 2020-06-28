@@ -7,12 +7,12 @@ from sklearn.model_selection import train_test_split
 '''
 results
 
-67% on training set
+99/99 [==============================] - 72s 727ms/step - loss: 0.5118 - accuracy: 0.6231
 '''
 
 model=Sequential()
 
-model.add(Conv2D(32,(3,3),padding='same',activation='relu',input_shape=(128,128,3)))
+model.add(Conv2D(32,(3,3), padding='same',activation='relu',input_shape=(128,128,3)))
 model.add(MaxPooling2D(2,2))
 model.add(SpatialDropout2D(0.1))
 
@@ -52,7 +52,7 @@ model.add(Dense(128,activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(128,activation='relu'))
 model.add(Dropout(0.5))
-model.add(Dense(1,activation='sigmoid'))
+model.add(Dense(3,activation='softmax'))
 
 adam=keras.optimizers.Adam(learning_rate=0.001)
 model.compile(optimizer=adam,loss='binary_crossentropy',metrics=['accuracy'])
