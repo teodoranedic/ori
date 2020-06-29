@@ -130,32 +130,8 @@ class OffensiveAgent(BaseAgent):
         self.start = gameState.getAgentPosition(self.index)
         CaptureAgent.registerInitialState(self, gameState)
 
-        self.epsilon = 0.0  # exploration prob
-        self.alpha = 0.2  # learning rate
-        self.discountRate = 0.8
-        self.weights = self.getWeights(gameState, None)
-
-    def getQValue(self, state, action):
-        """
-          Returns Q(state,action)
-        """
-        features = self.getFeatures(state, action)
-        return features * self.weights
-
     def chooseAction(self, gameState):
         """
-          MinMax ne zato sto necemo da uvek bira min ili max, nekad je bolji i prosek. Takodje
-        performanse su slicne performansama DFS-a koji prolazi celo stablo
-        Alfa-Beta odsecanje ne, neke korake cemo odseci a mozda su bili dobri, who will know
-        
-        Expectimax je ok kada ne znamo ishod akcije koju izvrsavamo. Ovde duhovi igraju sa
-        odredjenom dozom slucajnosti. Kod Expectimax algoritma vrednosti u stanjima treba da 
-        reprezentuju ishod koji se desava u proseku, a ne u najgorem slucaju (kao kod Minimaxa). Expectimax
-        pretraa racuna prosecnu vrednost ako podazumevamo optimalno igranje. Max cvorovi su isti kao kod Minimax pretrage. Cvorovi slucajeva su kao MIN, 
-        cvorovi, kod njih ishod nije siguran. Izracunavamo njihove ocekivane vrednosti (expected utillities), tj. u opstem
-        slucaju racunamo prosek vrednosti njihovih potomaka. Expectimax
-        uzima ocekivanu vrednost u odnosu na to kako se duhovi ponasaju. 
-           
         Expectimax algoritam koriscen
           
         """
@@ -171,11 +147,6 @@ class OffensiveAgent(BaseAgent):
             maxValue = max(values)
             bestActions = [a for a, v in zip(actions, values) if v == maxValue]
 
-        # nemamo kad dodje do granice da se prebaci na svom terenu zbog poena i onda da se vrati
-        # da gleda da li mu preprecava put duh, ako mu prepreci onda da se vraca unazad
-        # i ako ima manje od 3 tackice hrane i ako su one blizu da ide ka njima, a ne na svojoj teritoriji
-
-        # da ne treba da bezi od duhova ako je scared time
 
         foodLeft = len(self.getFood(gameState).asList())
 
@@ -194,11 +165,29 @@ class OffensiveAgent(BaseAgent):
 
     def max_value(self, gameState):
         maximum = float("-inf")
+        dict = {}
         # ovo kad bi moglo kroz sve moguce akcije
         # ovo su akcije za trenutno stanje
         actions = gameState.getLegalActions(self.index)
         for action in actions:
-           maximum = max(maximum,self.evaluate(gameState, action))
+            maximum = max(maximum, self.evaluate(gameState, action))
+
+        # maximum = float("-inf")
+        # dict = {}
+        #
+        # actions = gameState.getLegalActions(self.index)
+
+        # for action in actions:
+        #     gs = gameState.generateSuccessor(self.index, action)
+        #     max1 = self.evaluate(gameState, action)
+        #     for act in gs.getLegalActions(self.index):
+        #         if self.evaluate(gs, act) + max1 > maximum:
+        #             dict[action] = self.evaluate(gs, act) + max1
+        #             maximum = self.evaluate(gs, act) + max1
+        #
+        # for k in dict:
+        #     if dict[k] == maximum:
+        #         return k
         return maximum
 
     def getFeatures(self, gameState, action):
@@ -217,29 +206,17 @@ class OffensiveAgent(BaseAgent):
         ghosts = [a for a in enemies if not a.isPacman and a.getPosition() is not None]
         pacmans = [a for a in enemies if a.isPacman and a.getPosition() is not None]
 
-
         if action == Directions.STOP:
             features["stop"] = 1
 
         successor = self.getSuccessor(gameState, action)
-        # ako smo pacman, kako se ophoditi prema duhu
-        self.as_pacman(features, ghosts, newPosition, walls, successor)
-
         notScared = gameState.getAgentState(self.index).scaredTimer == 0
-
-        # kroz sve, prodji ovo opet
-        for i in enemies:
-            if i.getPosition() is not None:
-                if newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and not notScared:
-                    features["distanceToInvader"] += -10
-                    features["eatInvader"] = -10
-                    features["stop"] = 0
-                elif newPosition == i.getPosition() and not notScared:
-                    features["eatInvader"] = -10
-                    features["stop"] = 0
-
-        # ukoliko smo duh i idemo ka pacmanima
-        self.as_ghost(features, pacmans, newPosition, notScared, walls)
+        if successor.getAgentState(self.index).isPacman:
+            # ako smo pacman, kako se ophoditi prema duhu
+            self.as_pacman(features, ghosts, newPosition, walls, successor, gameState, currentPosition)
+        else:
+            # ukoliko smo duh i idemo ka pacmanima
+            self.as_ghost(features, pacmans, newPosition, notScared, walls)
 
         for c in capsules:
             if newPosition == c and successor.getAgentState(self.index).isPacman:
@@ -248,9 +225,7 @@ class OffensiveAgent(BaseAgent):
             elif newPosition in Actions.getLegalNeighbors(c, walls) and successor.getAgentState(self.index).isPacman:
                 features["eatCapsule"] = 1
 
-
         # ako je pacman za hranu
-        # proveri ovo 8 sa onim koliko ga mnozis i sabiras
         self.eat_food(features, gameState, newPosition, foodList, walls)
 
         features.divideAll(10.0)
@@ -259,24 +234,39 @@ class OffensiveAgent(BaseAgent):
 
     def getWeights(self, gameState, action):
         return {
-                 'stop': -5.0,
-                 # ukoliko smo pacman
-                 'normalGhostDistance': -20.0, # alarmantno
-                 'scaredGhostDistance': -6.0,
-                 'distanceToFood': -4.0,
-                 'eatGhost': -1.0,
-                 'eatFood': 1.0,
-                 'eatCapsule': 10.0,
-                 # ukoliko smo duh
-                 'eatInvader': 9.0,
-                 'distanceToInvader': 0,
-                 'scared': -20.0,
-                 # oba
-                 'successorPosition': -5.0,
-                 'reverse': 1.0
-                }
+            'stop': -5.0,
+            # ukoliko smo pacman
+            'normalGhostDistance': -20.0,  # alarmantno
+            'scaredGhostDistance': -6.0,
+            'distanceToFood': -4.0,
+            'eatGhost': -1.0,
+            'eatFood': 1.0,
+            'eatCapsule': 10.0,
+            'goHome': 50.0,
+            # ukoliko smo duh
+            'eatInvader': 9.0,
+            'distanceToInvader': 0,
+            'scared': -20.0,
+            # oba
+            'successorPosition': -5.0,
+            'reverse': 1.0
+        }
 
-    def as_pacman(self, features, ghosts, newPosition, walls, successor):
+    def as_pacman(self, features, ghosts, newPosition, walls, successor, gameState, currentPosition):
+        # nemamo kad dodje do granice da se prebaci na svom terenu zbog poena i onda da se vrati
+        # da gleda da li mu preprecava put duh, ako mu prepreci onda da se vraca unazad
+        # i ako ima manje od 3 tackice hrane i ako su one blizu da ide ka njima, a ne na svojoj teritoriji
+
+        #half_grid = successor.data.layout.width / 2 iz ovog smo dobile da je half = 16
+        #
+        # u crvenom je timu i ako je blozu halfa i ako ima dosta hrane onda da predje kuci
+        if gameState.isOnRedTeam(self.index) and abs(newPosition[0]-15) < 3 and gameState.getAgentState(self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == 1 :
+            features['goHome'] = 1000
+
+        elif (not gameState.isOnRedTeam(self.index)) and abs(newPosition[0] - 16) < 3 and gameState.getAgentState(self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == -1:
+            features['goHome'] = 1000
+
+
         for i in ghosts:
             # ukoliko su uplaseni duhovi  i ukoliko su na tacnoj poziciji
             # jedi ih
@@ -394,19 +384,7 @@ class DefensiveAgent(BaseAgent):
 
     def chooseAction(self, gameState):
         """
-          MinMax ne zato sto necemo da uvek bira min ili max, nekad je bolji i prosek. Takodje
-        performanse su slicne performansama DFS-a koji prolazi celo stablo
-        Alfa-Beta odsecanje ne, neke korake cemo odseci a mozda su bili dobri, who will know
-
-        Expectimax je ok kada ne znamo ishod akcije koju izvrsavamo. Ovde duhovi igraju sa
-        odredjenom dozom slucajnosti. Kod Expectimax algoritma vrednosti u stanjima treba da
-        reprezentuju ishod koji se desava u proseku, a ne u najgorem slucaju (kao kod Minimaxa). Expectimax
-        pretraa racuna prosecnu vrednost ako podazumevamo optimalno igranje. Max cvorovi su isti kao kod Minimax pretrage. Cvorovi slucajeva su kao MIN,
-        cvorovi, kod njih ishod nije siguran. Izracunavamo njihove ocekivane vrednosti (expected utillities), tj. u opstem
-        slucaju racunamo prosek vrednosti njihovih potomaka. Expectimax
-        uzima ocekivanu vrednost u odnosu na to kako se duhovi ponasaju.
-
-        Expectimax algoritam koriscen
+           Expectimax algoritam koriscen
 
         """
 
@@ -422,21 +400,6 @@ class DefensiveAgent(BaseAgent):
             approxValue, minimum = self.approx_find(gameState)
             bestActions = [a for a, v in zip(actions, values) if (approxValue <= v) and (v >= minimum)]
 
-        # juri hranu juri hranu na vecoj udaljenosti, 15 koraka npr
-
-        # foodLeft = len(self.getFood(gameState).asList())
-        #
-        # if foodLeft <= 2:
-        #     bestDist = 9999
-        #     for action in actions:
-        #         successor = self.getSuccessor(gameState, action)
-        #         pos2 = successor.getAgentPosition(self.index)
-        #         dist = self.getMazeDistance(self.start, pos2)
-        #         if dist < bestDist:
-        #             bestAction = action
-        #             bestDist = dist
-        #     return bestAction
-
         return random.choice(bestActions)
 
     def approx_find(self, gameState):
@@ -447,7 +410,6 @@ class DefensiveAgent(BaseAgent):
             aprox += self.evaluate(gameState, action)
             minimum = min(minimum, self.evaluate(gameState, action))
         return aprox / len(actions), minimum
-
 
     def getFeatures(self, gameState, action):
         # potreni podaci
@@ -474,7 +436,7 @@ class DefensiveAgent(BaseAgent):
         if len(invaders) == 0:
             # ovde je prazno nek ide ka sredinii
             features['distanceFromEdge'] = 3
-         # ukoliko smo preplaseni i juri nas pacman
+        # ukoliko smo preplaseni i juri nas pacman, mi bezimo
 
         if myState.scaredTimer > 0:
             features['numInvaders'] = 0
@@ -493,8 +455,6 @@ class DefensiveAgent(BaseAgent):
                 'onDefense': 20,
                 'invaderDistance': -1800,
                 'stop': -400,
-                'reverse': -250, # -2
-                'foodCount': -20,
-                'offenseFood': -1,
+                'reverse': -250,
                 'ghostsAreScared': -1,
                 'distanceFromEdge': -1}
