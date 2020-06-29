@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 
-# ucitavanje podataka
+# ucitavanje podataka 
 def load_data():
     data = pd.read_csv("C:\\Users\\teodo\Desktop\ori\credit_card_clustering\data\credit_card_data.csv")
     #data = pandas.read_csv("../data/credit_card_data.csv")
