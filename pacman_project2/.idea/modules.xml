@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../3.god/Berkeley-AI-Pacman-Projects-master/.idea/Berkeley-AI-Pacman-Projects-master.iml" filepath="$PROJECT_DIR$/../../3.god/Berkeley-AI-Pacman-Projects-master/.idea/Berkeley-AI-Pacman-Projects-master.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/pacman_project2.iml" filepath="$PROJECT_DIR$/.idea/pacman_project2.iml" />
     </modules>
   </component>

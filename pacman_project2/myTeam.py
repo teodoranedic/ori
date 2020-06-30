@@ -140,12 +140,9 @@ class OffensiveAgent(BaseAgent):
         pacman = gameState.getAgentState(self.index)
         bestActions = []
         # radimo pred korak samo ukoliko je pacman
-        if pacman.isPacman:
-            maxValue = self.max_value(gameState)
-            bestActions = [a for a, v in zip(actions, values) if v == maxValue]
-        else:
-            maxValue = max(values)
-            bestActions = [a for a, v in zip(actions, values) if v == maxValue]
+        #if pacman.isPacman:
+        maximum, max_action = self.max_value(gameState, 0)
+        bestActions = [max_action]
 
 
         foodLeft = len(self.getFood(gameState).asList())
@@ -163,32 +160,27 @@ class OffensiveAgent(BaseAgent):
 
         return random.choice(bestActions)
 
-    def max_value(self, gameState):
+
+    def max_value(self, gameState, depth):
         maximum = float("-inf")
-        dict = {}
-        # ovo kad bi moglo kroz sve moguce akcije
-        # ovo su akcije za trenutno stanje
+        max_action = Directions.STOP
         actions = gameState.getLegalActions(self.index)
-        for action in actions:
-            maximum = max(maximum, self.evaluate(gameState, action))
+        #3
+        if depth == 3:
+            for action in actions:
+                if self.evaluate(gameState, action) > maximum:
+                    max_action = action
+                    maximum = self.evaluate(gameState, action)/10
+            return maximum, max_action
+        else:
+            for action in actions:
+                succ = gameState.generateSuccessor(self.index, action)
+                next_level = (self.evaluate(gameState, action)/10 + self.max_value(succ, depth + 1)[0]/10)
+                if next_level > maximum:
+                    maximum = next_level
+                    max_action = action
+            return maximum, max_action
 
-        # maximum = float("-inf")
-        # dict = {}
-        #
-        # actions = gameState.getLegalActions(self.index)
-
-        # for action in actions:
-        #     gs = gameState.generateSuccessor(self.index, action)
-        #     max1 = self.evaluate(gameState, action)
-        #     for act in gs.getLegalActions(self.index):
-        #         if self.evaluate(gs, act) + max1 > maximum:
-        #             dict[action] = self.evaluate(gs, act) + max1
-        #             maximum = self.evaluate(gs, act) + max1
-        #
-        # for k in dict:
-        #     if dict[k] == maximum:
-        #         return k
-        return maximum
 
     def getFeatures(self, gameState, action):
         # potrebni podaci
@@ -238,7 +230,7 @@ class OffensiveAgent(BaseAgent):
             # ukoliko smo pacman
             'normalGhostDistance': -20.0,  # alarmantno
             'scaredGhostDistance': -6.0,
-            'distanceToFood': -4.0,
+            'distanceToFood': -2.0,
             'eatGhost': -1.0,
             'eatFood': 1.0,
             'eatCapsule': 10.0,
@@ -246,7 +238,7 @@ class OffensiveAgent(BaseAgent):
             # ukoliko smo duh
             'eatInvader': 9.0,
             'distanceToInvader': 0,
-            'scared': -20.0,
+            'scared': -2.0,
             # oba
             'successorPosition': -5.0,
             'reverse': 1.0
@@ -257,20 +249,23 @@ class OffensiveAgent(BaseAgent):
         # da gleda da li mu preprecava put duh, ako mu prepreci onda da se vraca unazad
         # i ako ima manje od 3 tackice hrane i ako su one blizu da ide ka njima, a ne na svojoj teritoriji
 
-        #half_grid = successor.data.layout.width / 2 iz ovog smo dobile da je half = 16
+        half_grid = successor.data.layout.width / 2 #iz ovog smo dobile da je half = 16
         #
-        # u crvenom je timu i ako je blozu halfa i ako ima dosta hrane onda da predje kuci
-        if gameState.isOnRedTeam(self.index) and abs(newPosition[0]-15) < 3 and gameState.getAgentState(self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == 1 :
-            features['goHome'] = 1000
+        # u crvenom je timu i ako je blIzu halfa i ako ima dosta hrane onda da predje kuci
 
-        elif (not gameState.isOnRedTeam(self.index)) and abs(newPosition[0] - 16) < 3 and gameState.getAgentState(self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == -1:
-            features['goHome'] = 1000
 
+        if gameState.isOnRedTeam(self.index) and abs(newPosition[0]- (half_grid - 1)) < 3 and gameState.getAgentState(self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == 1 :
+            features['goHome'] += 1000
+
+
+        elif (not gameState.isOnRedTeam(self.index)) and abs(newPosition[0] - (half_grid)) < 3 and gameState.getAgentState(self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == -1:
+            features['goHome'] += 1000
 
         for i in ghosts:
             # ukoliko su uplaseni duhovi  i ukoliko su na tacnoj poziciji
             # jedi ih
             if (i.scaredTimer > 0) and (newPosition == i.getPosition()):
+
                 features['eatGhost'] += 5
                 features['eatFood'] = 0
                 features["distanceToFood"] = 1
@@ -293,6 +288,7 @@ class OffensiveAgent(BaseAgent):
             # ukoliko je scared time manje od 2 i ako imamo preplasene blizu da bezi
             elif (i.scaredTimer < 3) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):
                 # beziiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+
                 features["distanceToFood"] = 0
                 features["normalGhostDistance"] += 5
                 features["scaredGhostDistance"] = 0
@@ -304,8 +300,9 @@ class OffensiveAgent(BaseAgent):
 
             # ukoliko smo pacman i duhovi su normalni sta raditiiiiiiii
             if (i.scaredTimer == 0) and (newPosition == i.getPosition()):
-                features["distanceToFood"] = 0
-                features["normalGhostDistance"] += 10
+
+                # features["distanceToFood"] = 0
+                features["normalGhostDistance"] += 15
                 features["scaredGhostDistance"] = 0
                 features["reverse"] = 0.0
                 features["eatCapsule"] = 1
@@ -317,6 +314,7 @@ class OffensiveAgent(BaseAgent):
 
             elif (i.scaredTimer == 0) and (
                     newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # neprijatelj u blizini
+
                 features["distanceToFood"] = 0
                 features["normalGhostDistance"] += 5
                 features["reverse"] = 0
@@ -324,7 +322,6 @@ class OffensiveAgent(BaseAgent):
                 features["eatCapsule"] = 1
                 features['eatGhost'] = 0
                 features['eatFood'] = 0
-
                 if len(successor.getLegalActions(self.index)) < 4:  # kako ga neprijatelj ne bi oterao u cosak
                     features['successorPosition'] += 50
 
@@ -333,7 +330,6 @@ class OffensiveAgent(BaseAgent):
 
             # ako nismo uplaseni i next pos je pacman
             if newPosition == i.getPosition() and notScared:
-
                 features["eatInvader"] += 5
                 features["distanceToInvader"] = 1
                 features["scared"] = 0
@@ -342,6 +338,7 @@ class OffensiveAgent(BaseAgent):
 
             # ako nismo uplaseni i pacman je blizu
             elif newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) and notScared:
+
                 features["eatInvader"] = 1
                 features["distanceToInvader"] += 10
                 features["scared"] = 0
@@ -393,23 +390,34 @@ class DefensiveAgent(BaseAgent):
         pacman = gameState.getAgentState(self.index)
 
         # radimo pred korak samo ukoliko je pacman
-        if pacman.isPacman:
-            maxValue = max(values)
-            bestActions = [a for a, v in zip(actions, values) if v == maxValue]
-        else:
-            approxValue, minimum = self.approx_find(gameState)
-            bestActions = [a for a, v in zip(actions, values) if (approxValue <= v) and (v >= minimum)]
+        #if pacman.isPacman:
+        maximum, max_action = self.max_find(gameState, 0)
+        bestActions = [max_action]
+        # else:
+        #     approxValue, minimum = self.approx_find(gameState)
+        #     bestActions = [a for a, v in zip(actions, values) if (approxValue <= v) and (v >= minimum)]
 
         return random.choice(bestActions)
 
-    def approx_find(self, gameState):
-        aprox = 0
-        minimum = float("inf")
+    def max_find(self, gameState, depth):
+        maximum = float("-inf")
+        max_action = Directions.STOP
         actions = gameState.getLegalActions(self.index)
-        for action in actions:
-            aprox += self.evaluate(gameState, action)
-            minimum = min(minimum, self.evaluate(gameState, action))
-        return aprox / len(actions), minimum
+        # 3
+        if depth == 3:
+            for action in actions:
+                if self.evaluate(gameState, action) > maximum:
+                    max_action = action
+                    maximum = self.evaluate(gameState, action) / 10
+            return maximum, max_action
+        else:
+            for action in actions:
+                succ = gameState.generateSuccessor(self.index, action)
+                next_level = (self.evaluate(gameState, action) / 10 + self.max_find(succ, depth + 1)[0] / 10)
+                if next_level > maximum:
+                    maximum = next_level
+                    max_action = action
+            return maximum, max_action
 
     def getFeatures(self, gameState, action):
         # potreni podaci
