@@ -1,7 +1,10 @@
 import keras
 from keras.models import Sequential
-from keras.layers import Conv2D,MaxPooling2D,Flatten,Dropout,Dense,BatchNormalization,SpatialDropout2D, ZeroPadding2D
+from keras.layers import Conv2D, MaxPooling2D, BatchNormalization, SpatialDropout2D
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.utils import plot_model
 import numpy as np
 import pandas as pd
