@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tensorflow.keras.utils import plot_model
 
-
 # data preprocessing
 img_dir = "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set\*.jpeg"
 imglist = glob.glob(img_dir)
