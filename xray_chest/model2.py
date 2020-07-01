@@ -9,15 +9,10 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import InputLayer
 from keras.preprocessing.image import ImageDataGenerator
 import pandas as pd
-'''
-results:
-331/331 [==============================] - 154s 466ms/step - loss: 0.1064 - accuracy: 0.9368
-265/265 [==============================] - 204s 768ms/step - loss: 0.1172 - accuracy: 0.9267 - val_loss: 0.4141 - val_accuracy: 0.8202
+import matplotlib.pyplot as plt
+import numpy as np
+from tensorflow.keras.utils import plot_model
 
-93% accuracy on training set
-82% accuracy on validation set
-?? prediction on one image
-'''
 
 # data preprocessing
 img_dir = "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set\*.jpeg"
@@ -34,6 +29,7 @@ model.add(ZeroPadding2D(3))
 model.add(Conv2D(32, (7, 7), padding="valid", strides=(2, 2)))
 model.add(BatchNormalization(axis=2))
 model.add(Activation('relu'))
+#model.add(Dropout(0.5))
 
 model.add(ZeroPadding2D(1))
 model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
@@ -61,8 +57,9 @@ model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(3, activation='softmax'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-
 model.summary()
+
+#plot_model(model, to_file="model.png", show_shapes=True, show_layer_names=True)
 
 data = pd.read_csv("C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set\metadata\chest_xray_metadata.csv")
 dfd = pd.DataFrame(data=data)
@@ -73,37 +70,60 @@ train_df, validate_df = train_test_split(dfd, test_size=0.2, random_state=42)
 train_df = train_df.reset_index(drop=True)
 validate_df = validate_df.reset_index(drop=True)
 
-test_datagen = ImageDataGenerator(
-    height_shift_range=0.1
+datagen = ImageDataGenerator(
+    height_shift_range=0.1,
+    rescale=1./255,
+    # rotation_range = 40,
+    # width_shift_range=0.1,
+    # shear_range = 0.2,
+    # zoom_range = 0.2,
+    # horizontal_flip = True,
+    # brightness_range = (0.5, 1.5)
 )
 
-train_generator = test_datagen.flow_from_dataframe(
+train_generator = datagen.flow_from_dataframe(
     train_df,
     "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set",
     x_col='X_ray_image_name',
     y_col='Label_1_Virus_category',
-    rescale=1./255,
-    width_shift_range=0.1,
+    #rescale=1./255,
+    #width_shift_range=0.1,
     target_size=(224, 224),
     class_mode='categorical',
     batch_size=16
 )
 
-val_set = test_datagen.flow_from_dataframe(
+val_set = datagen.flow_from_dataframe(
     validate_df,
     "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest_xray_data_set",
     x_col='X_ray_image_name',
     y_col='Label_1_Virus_category',
-    rescale=1. / 255,
-    shear_range=0.1,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    width_shift_range=0.1,
+    #rescale=1. / 255,
+    #shear_range=0.1,
+    #zoom_range=0.2,
+    #horizontal_flip=True,
+    #width_shift_range=0.1,
     target_size=(224, 224),
     class_mode='categorical',
     batch_size=32)
 
 history = model.fit(train_generator, batch_size=64, epochs=100, validation_data=val_set)
+
+# plot metrics
+N = 100 # epochs
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(np.arange(0, N), history.history["loss"], label="train_loss")
+plt.plot(np.arange(0, N), history.history["val_loss"], label="val_loss")
+plt.plot(np.arange(0, N), history.history["accuracy"], label="train_acc")
+plt.plot(np.arange(0, N), history.history["val_accuracy"], label="val_acc")
+plt.title("Training Loss and Accuracy on Chest X-ray Dataset")
+plt.xlabel("Epoch #")
+plt.ylabel("Loss/Accuracy")
+plt.legend(loc="lower left")
+plt.show()
+
+
 
 
 

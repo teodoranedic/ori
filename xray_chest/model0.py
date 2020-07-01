@@ -9,13 +9,8 @@ from tensorflow.keras.utils import plot_model
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-'''
-results
-
-'''
 
 model=Sequential()
-
 
 model.add(Conv2D(32,(3,3), padding='same',activation='relu',input_shape=(128,128,3)))
 model.add(MaxPooling2D(2,2))
