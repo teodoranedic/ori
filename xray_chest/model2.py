@@ -108,6 +108,7 @@ val_set = datagen.flow_from_dataframe(
 
 history = model.fit(train_generator, batch_size=64, epochs=100, validation_data=val_set)
 
+
 # plot metrics
 N = 100 # epochs
 plt.style.use("ggplot")
