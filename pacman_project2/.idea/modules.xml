@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../../3.god/Berkeley-AI-Pacman-Projects-master/.idea/Berkeley-AI-Pacman-Projects-master.iml" filepath="$PROJECT_DIR$/../../3.god/Berkeley-AI-Pacman-Projects-master/.idea/Berkeley-AI-Pacman-Projects-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../credit_card_clustering/.idea/credit_card_clustering.iml" filepath="$PROJECT_DIR$/../credit_card_clustering/.idea/credit_card_clustering.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/pacman_project2.iml" filepath="$PROJECT_DIR$/.idea/pacman_project2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v1-pretrage/.idea/v1-pretrage.iml" filepath="$PROJECT_DIR$/../../Vežbe/v1-pretrage/.idea/v1-pretrage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../Vežbe/v2-pretrage-heuristike-hrana-multi/.idea/v2-pretrage-heuristike-hrana-multi.iml" filepath="$PROJECT_DIR$/../../Vežbe/v2-pretrage-heuristike-hrana-multi/.idea/v2-pretrage-heuristike-hrana-multi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../xray_chest/.idea/xray_chest.iml" filepath="$PROJECT_DIR$/../xray_chest/.idea/xray_chest.iml" />
     </modules>
   </component>
 </project>

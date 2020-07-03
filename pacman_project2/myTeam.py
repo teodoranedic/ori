@@ -132,22 +132,15 @@ class OffensiveAgent(BaseAgent):
         CaptureAgent.registerInitialState(self, gameState)
 
     def chooseAction(self, gameState):
-        """
-        Expectimax algoritam koriscen
 
-        """
         actions = gameState.getLegalActions(self.index)
         values = [self.evaluate(gameState, a) for a in actions]
         pacman = gameState.getAgentState(self.index)
-        bestActions = []
-        # radimo pred korak samo ukoliko je pacman
-        # if pacman.isPacman:
+
         maximum, max_action = None, None
         maximum, max_action = self.max_value(gameState, 0)
-        bestActions = [max_action]
 
         foodLeft = len(self.getFood(gameState).asList())
-
         if foodLeft <= 2:
             bestDist = 9999
             for action in actions:
@@ -159,7 +152,29 @@ class OffensiveAgent(BaseAgent):
                     bestDist = dist
             return bestAction
 
-        return random.choice(bestActions)
+        ghosts = [gameState.getAgentState(a) for a in self.getOpponents(gameState) \
+                   if not gameState.getAgentState(a).isPacman and gameState.getAgentState(a).getPosition() is not None]
+        walls = gameState.getWalls()
+        #half = successor.data.layout.width / 2
+        brojac = -1
+        bestAction = None
+        if gameState.getAgentState(self.index).numCarrying > 3:
+            bestDist = 9999
+            for action in actions:
+                successor = self.getSuccessor(gameState, action)
+                pos2 = successor.getAgentPosition(self.index)
+                dist = self.getMazeDistance(self.start, pos2)
+                for i in ghosts:
+                    if pos2 == i.getPosition() or pos2 in Actions.getLegalNeighbors(i.getPosition(), walls) :
+                        brojac +=1
+                        bestAction = max_action
+                    if dist < bestDist and pos2 != i.getPosition() and brojac == -1 and action != Directions.STOP:
+                        bestAction = action
+                        bestDist = dist
+            if bestAction!= None:
+                return bestAction
+
+        return max_action
 
     def max_value(self, gameState, depth):
         maximum = float("-inf")
@@ -229,7 +244,7 @@ class OffensiveAgent(BaseAgent):
         return {
             'stop': -5.0,
             # ukoliko smo pacman
-            'normalGhostDistance': -20.0,  # alarmantno
+            'normalGhostDistance': -25.0,  # alarmantno
             'scaredGhostDistance': -6.0,
             'distanceToFood': -2.0,
             'eatGhost': -1.0,

@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/credit_card_clustering.iml" filepath="$PROJECT_DIR$/.idea/credit_card_clustering.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../pacman_project2/.idea/pacman_project2.iml" filepath="$PROJECT_DIR$/../pacman_project2/.idea/pacman_project2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../xray_chest/.idea/xray_chest.iml" filepath="$PROJECT_DIR$/../xray_chest/.idea/xray_chest.iml" />
     </modules>
   </component>
 </project>

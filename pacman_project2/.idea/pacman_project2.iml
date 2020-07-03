@@ -4,6 +4,9 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="Python 3.6" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Berkeley-AI-Pacman-Projects-master" />
+    <orderEntry type="module" module-name="xray_chest" />
+    <orderEntry type="module" module-name="credit_card_clustering" />
+    <orderEntry type="module" module-name="v2-pretrage-heuristike-hrana-multi" />
+    <orderEntry type="module" module-name="v1-pretrage" />
   </component>
 </module>

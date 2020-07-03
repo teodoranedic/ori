@@ -21,7 +21,7 @@
   <component name="ProjectId" id="1dlHA2O25VdK2nwANPAhK8wdmVN" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$USER_HOME$/Downloads/ConvNet-master" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -44,8 +44,8 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.main_cnn">
-    <configuration name="code" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager" selected="Python.capture">
+    <configuration name="baselineTeam" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="ori" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -53,12 +53,33 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/chest_xray/src" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pacman_project2" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/chest_xray/src/code.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pacman_project2/baselineTeam.py" />
       <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="capture" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="ori" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pacman_project2" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pacman_project2/capture.py" />
+      <option name="PARAMETERS" value="-r myTeam -b myTeam" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -108,11 +129,41 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="myTeam" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="ori" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pacman_project2" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pacman_project2/myTeam.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.baselineTeam" />
+      <item itemvalue="Python.capture" />
+      <item itemvalue="Python.main_cnn" />
+      <item itemvalue="Python.model_cnn" />
+      <item itemvalue="Python.myTeam" />
+    </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.capture" />
+        <item itemvalue="Python.myTeam" />
+        <item itemvalue="Python.baselineTeam" />
         <item itemvalue="Python.main_cnn" />
         <item itemvalue="Python.model_cnn" />
-        <item itemvalue="Python.code" />
       </list>
     </recent_temporary>
   </component>
