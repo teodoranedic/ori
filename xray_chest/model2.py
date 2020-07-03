@@ -123,6 +123,32 @@ plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
 plt.show()
 
+# testiranje
+
+# ucitavanje test podataka
+test_data = pd.read_csv("C:\\Users\\teodo\Desktop\ori\\xray_chest\chest-xray-dataset-test\chest_xray_test_dataset.csv", nrows=624)
+test = pd.DataFrame(data=test_data)
+
+test["Label_1_Virus_category"] = test["Label_1_Virus_category"].replace({None: 'Normal', '': 'Normal'})
+del test['Label_2_Virus_category']
+test['X_ray_image_name'] = test['X_ray_image_name'].astype(str)
+
+test_idg = ImageDataGenerator(
+    rescale=1./255,
+    # height_shift_range=0.001,
+)
+
+test_generator = test_idg.flow_from_dataframe(
+    test,
+    "C:\\Users\\teodo\Desktop\ori\\xray_chest\chest-xray-dataset-test\test",
+    x_col='X_ray_image_name',
+    y_col='Label_1_Virus_category',
+    target_size=(224, 224),
+    class_mode='categorical',
+    batch_size=16
+)
+
+test_results = model.evaluate(test_generator, batch_size=8)
 
 
 
