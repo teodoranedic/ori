@@ -41,7 +41,7 @@ BS = 32
 opt = Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
 print(model.summary())
 #plot_model(model, to_file="model.png",show_shapes=True, show_layer_names=True)
-model.compile(loss="binary_crossentropy", optimizer=opt,
+model.compile(loss="categorical_crossentropy", optimizer=opt,
               metrics=["accuracy"])
 
 # load data

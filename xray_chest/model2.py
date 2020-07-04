@@ -55,7 +55,7 @@ model.add(Flatten())
 model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(3, activation='softmax'))
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 model.summary()
 
 #plot_model(model, to_file="model.png", show_shapes=True, show_layer_names=True)
