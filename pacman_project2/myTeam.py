@@ -171,7 +171,7 @@ class OffensiveAgent(BaseAgent):
                     if dist < bestDist and pos2 != i.getPosition() and brojac == -1 and action != Directions.STOP:
                         bestAction = action
                         bestDist = dist
-            if bestAction!= None:
+            if bestAction is not None:
                 return bestAction
 
         return max_action
@@ -248,11 +248,11 @@ class OffensiveAgent(BaseAgent):
             'scaredGhostDistance': -6.0,
             'distanceToFood': -2.0,
             'eatGhost': -1.0,
-            'eatFood': 1.0,
+            'eatFood': 2.0,
             'eatCapsule': 10.0,
-            'goHome': 20.0,
+            'goHome': 11.0,
             # ukoliko smo duh
-            'eatInvader': 40.0,
+            'eatInvader': 20.0,
             'distanceToInvader': 10.0,
             # oba
             'successorPosition': -5.0,
@@ -268,26 +268,26 @@ class OffensiveAgent(BaseAgent):
         #
         # u crvenom je timu i ako je blIzu halfa i ako ima dosta hrane onda da predje kuci
 
-        if gameState.isOnRedTeam(self.index) and abs(newPosition[0] - (half-1)) < 4 and gameState.getAgentState(
-                self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == 1:
-            features['goHome'] += 100
-            features["distanceToFood"] = 0
-            features["normalGhostDistance"] += 55
-            features["scaredGhostDistance"] = 0
-            features["eatCapsule"] = 1
-            features['eatGhost'] = 0
-            features['eatFood'] = 0
-            features['successorPosition'] += 50
-        elif (not gameState.isOnRedTeam(self.index)) and (newPosition[0] - half) > -4 and gameState.getAgentState(
-                self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == -1:
-            features['goHome'] += 100
-            features["distanceToFood"] = 0
-            features["normalGhostDistance"] += 55
-            features["scaredGhostDistance"] = 0
-            features["eatCapsule"] = 1
-            features['eatGhost'] = 0
-            features['eatFood'] = 0
-            features['successorPosition'] += 50
+        # if gameState.isOnRedTeam(self.index) and abs(newPosition[0] - (half-1)) < 4 and gameState.getAgentState(
+        #         self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == 1:
+        #     features['goHome'] += 100
+        #     features["distanceToFood"] = 0
+        #     features["normalGhostDistance"] += 55
+        #     features["scaredGhostDistance"] = 0
+        #     features["eatCapsule"] = 1
+        #     features['eatGhost'] = 0
+        #     features['eatFood'] = 0
+        #     features['successorPosition'] += 50
+        # elif (not gameState.isOnRedTeam(self.index)) and (newPosition[0] - half) > -4 and gameState.getAgentState(
+        #         self.index).numCarrying > 3 and currentPosition[0] - newPosition[0] == -1:
+        #     features['goHome'] += 100
+        #     features["distanceToFood"] = 0
+        #     features["normalGhostDistance"] += 55
+        #     features["scaredGhostDistance"] = 0
+        #     features["eatCapsule"] = 1
+        #     features['eatGhost'] = 0
+        #     features['eatFood'] = 0
+        #     features['successorPosition'] += 50
 
 
         for i in ghosts:
@@ -295,6 +295,7 @@ class OffensiveAgent(BaseAgent):
             # ukoliko su uplaseni duhovi  i ukoliko su na tacnoj poziciji
             # jedi ih
             if (i.scaredTimer > 0) and (newPosition == i.getPosition()):
+                print("UDE")
                 features['goHome'] += 1
                 features['eatGhost'] += 15
                 features['eatFood'] = 0
@@ -308,7 +309,7 @@ class OffensiveAgent(BaseAgent):
             # ukoliko je preplaseni duh u blizini, a vreme uplasenosti ne istice uskoro
             elif (i.scaredTimer > 2) and \
                     (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):
-
+                print("UDE1")
                 features['goHome'] += 1
                 features["distanceToFood"] += 1
                 features["scaredGhostDistance"] += 5
@@ -322,7 +323,7 @@ class OffensiveAgent(BaseAgent):
             # ukoliko je scared time manje od 2 i ako imamo preplasene blizu da bezi
             elif (i.scaredTimer < 3) and (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):
                 # beziiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
-
+                print("UDE3")
                 features['goHome'] += 1
                 features["distanceToFood"] = 0
                 features["normalGhostDistance"] += 5
@@ -336,7 +337,7 @@ class OffensiveAgent(BaseAgent):
 
             # ukoliko smo pacman i duhovi su normalni sta raditiiiiiiii
             if (i.scaredTimer == 0) and (newPosition == i.getPosition()):
-
+                print("UDE4")
                 features['goHome'] += 1
                 features["distanceToFood"] = 0
                 features["normalGhostDistance"] += 15
@@ -352,8 +353,8 @@ class OffensiveAgent(BaseAgent):
 
             elif (i.scaredTimer == 0) and (
                     newPosition in Actions.getLegalNeighbors(i.getPosition(), walls)):  # neprijatelj u blizini
-
-                features['goHome'] += 1
+                print("UDE5")
+               # features['goHome'] += 1
                 features["distanceToFood"] = 0
                 features["normalGhostDistance"] += 5
                 # features['stop'] = 0
@@ -383,9 +384,9 @@ class OffensiveAgent(BaseAgent):
                 # features["stop"] = 5
             # features["reverse"] = 0
 
-            elif notScared and newPosition[0] == half:
-                features["distanceToInvader"] += 50
-                features["goHome"] += 150
+            # elif notScared and newPosition[0] == half:
+            #     features["distanceToInvader"] += 50
+            #     features["goHome"] += 150
             # ako smo uplaseni
             elif (newPosition in Actions.getLegalNeighbors(i.getPosition(), walls) or newPosition == i.getPosition()
             ) and (not notScared):
