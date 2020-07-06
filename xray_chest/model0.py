@@ -55,7 +55,7 @@ model.add(Dense(64, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(3, activation='softmax'))
 INIT_LR = 0.001
-EPOCHS = 169
+EPOCHS = 101
 adam = tensorflow.keras.optimizers.Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
 
 print(model.summary())
